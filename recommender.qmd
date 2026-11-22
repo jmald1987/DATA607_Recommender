@@ -4,5 +4,103 @@ author: "Johnny Maldonado"
 format: html
 editor: visual
 ---
-## Intro
 
+## Introduction
+
+Joyce Xu describes a model that maps article text to reader-selected interests. Its features combine LDA topics, keywords, and Universal Sentence Encoder representations; an ensemble of classifier chains produces interest labels. The article explains why literal tags and reader interests do not align reliably and emphasizes human review. It describes this classifier as one input to recommendations, not the entire ranking system. [Xu, 2021](#ref-xu)
+
+This dated account supports distinguishing inferred interests from explicitly chosen ones. It does not establish that the same classifier or onboarding interface remains in production in November 2026.
+
+### Editorially guided modules: the 2024 account
+
+Zhen Yang's NYT-authored account, republished by Nieman Lab, describes three stages: pooling eligible articles, ranking, and finishing. Editors shape eligibility; contextual bandits often rank candidates; editorial importance can affect ordering. Finishing includes pinning and already-read/already-seen filters. Additional capabilities include exposure boosting, minimum exposure, smart refreshing, and tools that let editors inspect algorithmic modules. The account distinguishes selecting stories within modules from reordering modules, which it presents as future work. [Yang, 2024](#ref-yang)
+
+These are documented 2024 capabilities, not live observations or proof of a universal 2026 architecture. The sources reviewed do not establish a newer comprehensive NYT news-ranking specification. I therefore do not assert that CTM was universally replaced, that every recommendation is personalized, or that the whole homepage follows one algorithm. The 2021 and 2024 accounts concern different components and surfaces; combining them into a single confirmed production pipeline would overstate the evidence.
+
+## Interface-level reverse engineering
+
+### Documented surfaces and testable hypotheses
+
+The available evidence identifies historical recommendation surfaces and suggests how personalization might appear to a reader. It does not establish the current layout or behavior of a live account.
+
+| Evidence | Defensible reading | What cannot be concluded |
+|----|----|----|
+| **Documented, 2015:** Recommended for You surface | The historical system had a personalized discovery surface. | The label or model still exists unchanged. |
+| **Documented, 2021:** reader-selected interests | Explicit preference information was available to a described component. | All current users see the same interest selector. |
+| **Inferred:** two readers might see different lists | Personalization is one possible explanation. | Differences alone identify the model, its inputs, or its causal effect. |
+| **Inferred:** a story might disappear after reading | A history-sensitive filter is a plausible explanation. | Disappearance proves dislike, retraining, or a particular filter threshold. |
+| **Inferred:** refreshed lists might change without new clicks | Time, editorial changes, experimentation, or exploration could explain this. | Change necessarily means a reader profile has been updated. |
+
+Interface labels communicate a product promise, not a model specification. Even a label such as “For You” would not reveal whether ranking uses semantic similarity, collaborative signals, contextual exploration, or a rules-based fallback. Conversely, shared recommendations do not prove that personalization is absent: different readers can legitimately receive the same important story.
+
+### A reproducible follow-up audit
+
+A follow-up audit could test these hypotheses by recording the time, URL, device layout, signed-in state, consent state, module label, article links, and ranking order in authorized test sessions. The following protocol is proposed rather than an experiment conducted for this report.
+
+First, repeat the same page view without changing reading behavior to measure ordinary list turnover. Next, compare a new session with a returning session at approximately the same time. Finally, read several articles on a preselected topic and revisit the same module at recorded intervals. Compare overlap and topic mix with the no-action baseline, holding device, location, and consent settings constant where possible. Record changing headlines, breaking news, and experiment assignments when visible.
+
+For two lists of the same size, a simple overlap measure is the number of shared article URLs divided by the list size. Report list size and time gap alongside the value. Increased exposure to a topic after reading about it would be **consistent with** behavioral personalization, but one uncontrolled session would not establish causality. Editor intervention, article availability, caching, and random exploration remain alternative explanations.
+
+Without internal access, model weights, training frequency, retained-history windows, experiment allocation, and cross-device identity rules remain unknown. This report does not infer sensitive reader attributes or invent internal databases, APIs, or deployment technologies.
+
+## Proposed improvements and measurable evaluation
+
+These are candidate enhancements to test, not assertions that NYT currently lacks the features. All numerical targets below are **proposed decision thresholds**, not reported NYT performance. Baselines and statistical power must be established before an experiment begins.
+
+### 1. Make correction of mistaken interests easier
+
+Spangher's noisy-click problem suggests separating “not interested in this topic,” “already know this,” and “not now.” Offer these choices beside an explanation of the recommendation, with undo and a way to reset the relevant interest. A one-time dismissal should not silently suppress important coverage indefinitely. Where similar controls already exist, test their discoverability and effect instead of duplicating them.
+
+**Test:** Randomize readers to the existing experience or the revised controls. In usability tasks, target at least 80% successful correction without assistance. In the live test, seek a 20% relative reduction in repeat exposure to explicitly dismissed topics over seven days, while keeping reader-rated usefulness within one percentage point of control or better. Treat intentional return to a topic separately from an unwanted repeat. A more visible control may initially increase negative feedback, so raw dismissal counts alone are not a failure metric.
+
+### 2. Optimize for worthwhile reading, with clicks as a diagnostic
+
+A click may express curiosity without satisfaction; non-clicking may reflect lack of time or an unseen card. Test a reward that combines meaningful reading with sampled usefulness feedback. Define a qualified reading visit in advance, for example at least 30 seconds of active foreground reading plus 50% scroll depth for an ordinary text article. Calibrate separate rules for short updates, audio, interactive stories, and assistive technologies. Neither duration nor scrolling alone measures comprehension.
+
+**Test:** Use qualified reading visits per eligible reader-week as the primary outcome, aiming for a 5% relative increase. Require reader-rated usefulness not to decline by more than one percentage point and monitor seven-day return rate. Report clicks, active reading, and survey response rates separately. A small random survey invitation sample can reduce dependence on feedback from only highly motivated users, though nonresponse bias remains.
+
+### 3. Measure useful discovery across subjects
+
+The historical reading raises narrowing as a risk, but that is not evidence of a current filter-bubble effect. Test an optional discovery slot drawn from editor-approved material outside a reader's two most-read sections over the preceding 30 days. This is a proposed operational definition of subject discovery, not a measurement of ideological diversity. Readers with insufficient history should receive a separately evaluated broad editorial selection.
+
+**Test:** Seek a 10% relative increase in qualified reading visits to those unfamiliar sections per reader-week, with no more than a 2% relative reduction in total qualified visits. Pair the result with a sampled question about whether the unfamiliar recommendation was worthwhile. Merely increasing the number of sections displayed would reward irrelevant variety. Preserve required editorial coverage and report outcomes for light and heavy readers separately.
+
+### 4. Make freshness sensitive to meaningful story updates
+
+Extend the idea of history-aware presentation by distinguishing an unchanged story from a substantially updated one. A reader who already read a developing story may still need its newly reported facts. Editors could mark a material update and the interface could explain why it is being shown again. This proposal concerns version-aware exceptions, not simply adding a generic repeat filter.
+
+**Test:** Aim to reduce repeat impressions of unchanged, completed articles by 20% relative to control, while increasing qualified visits to materially updated coverage by 5%. Require no reduction in exposure to editor-designated essential updates. Measure frequent and infrequent visitors separately. Check mistaken update labels manually; trivial headline edits should not repeatedly reset eligibility.
+
+### Evaluation safeguards and rollout
+
+Run one intervention at a time initially, with a stable reader-level random assignment and at least four full weeks if traffic and power permit. Determine sample size from baseline variance and the minimum meaningful effect before launch; the duration alone does not guarantee adequate power. Define the primary outcome and noninferiority margins in advance, report confidence intervals, and avoid stopping simply because an interim result looks favorable. Analyze intent-to-treat outcomes at the reader level so repeated visits do not masquerade as independent users.
+
+Inspect new versus established readers, mobile versus desktop, and low versus high activity. Averages can conceal harm to a small group. Log eligibility, impressions, position, article version, and experiment assignment using appropriate access controls. Offline ranking evaluation should split by time and respect what was available when each recommendation was made. Otherwise, future engagement or later versions of stories can leak into the evaluation.
+
+If evaluating a new policy from historical recommendation logs, account for the fact that the old policy selected what readers could see. Randomized exploration with recorded selection probabilities can support suitable counterfactual estimators; ordinary click logs alone do not make such estimates unbiased. If those prerequisites are absent, treat offline results as screening evidence and rely on a controlled online test.
+
+Before expansion, require editorial review of important-news coverage, no material increase in complaints, and no unacceptable deterioration in loading performance. Retention can be examined over a longer follow-up period, without claiming that a short engagement lift proves a subscription effect. These safeguards follow from the dual Scenario Design: a successful change must help readers and remain acceptable to the newsroom.
+
+## Conclusion
+
+The supplied 2015 account shows why news recommendations benefit from combining article content with audience behavior, and why clicks should be treated cautiously. The Amazon reading adds a useful comparison about scalable behavioral recommendation. Later NYT-authored accounts show that explicit interests and editorial decisions also matter. Together, the evidence supports evaluating recommendation quality as useful discovery under editorial constraints, while leaving the exact current production architecture unresolved.
+
+My priorities are clearer reader correction, better measures of worthwhile reading, useful discovery, and version-aware freshness. Each is framed as a test with a measurable benefit and a safeguard, rather than a promise that a more complex algorithm will automatically improve the experience.
+
+## References
+
+### Course and supplied readings
+
+<a id="ref-course"></a> **DATA 607 course materials.** (n.d.). *Recommender-system analysis assignment* and *How to Perform a Scenario Analysis (review)* \[Course handout\]. The image attributes Scenario Design to Bruce D. Temkin, *Scenario Design: A Disciplined Approach to Customer Experience*, Forrester Research, 2004. Framework attributed in the course handout; original report not consulted.
+
+<a id="ref-spangher"></a> **Spangher, A.** (2015, August 11). *Building the Next New York Times Recommendation Engine*. The New York Times, Open. Supplied seven-page PDF, printed December 2, 2015. Page references above refer to PDF pages. [Original article URL](https://open.blogs.nytimes.com/2015/08/11/building-the-next-new-york-times-recommendation-engine/). Course-provided PDF consulted.
+
+<a id="ref-amazon"></a> **Linden, G., Smith, B., & York, J.** (2003). Amazon.com recommendations: Item-to-item collaborative filtering. *IEEE Internet Computing, 7*(1), 76–80. Course-provided PDF consulted; citations use printed journal pages.
+
+### Subsequent engineering and business sources
+
+<a id="ref-xu"></a> **Xu, J.** (2021, January 14). *Machine Learning and Reader Input Help Us Recommend Articles*. NYT Open. [Original](https://open.nytimes.com/we-recommend-articles-with-a-little-help-from-our-friends-machine-learning-and-reader-input-e17e85d6cf04); [accessible archived text consulted](https://context.center/timegate/https%3A/open.nytimes.com/we-recommend-articles-with-a-little-help-from-our-friends-machine-learning-and-reader-input-e17e85d6cf04/). Archive checked November 22, 2026; it is an archived NYT-authored account, not a current product audit.
+
+<a id="ref-yang"></a> **Yang, Z.** (2024, October 9, republication date). *How The New York Times incorporates editorial judgment in algorithms to curate its home page*. Nieman Journalism Lab. [Full NYT-authored republication consulted](https://www.niemanlab.org/2024/10/how-the-new-york-times-incorporates-editorial-judgment-in-algorithms-to-curate-its-home-page/). The page credits its original publication to NYT Open and names Celia Eddy, Alex Saez, Derrick Ho, and Christopher Wiggins as contributors. [Original NYT Open link](https://open.nytimes.com/how-the-new-york-times-incorporates-editorial-judgement-in-algorithms-to-curate-home-screen-content-85f48209fdad). Republication checked November 22, 2026; direct retrieval of the original failed.
+
+<a id="ref-annual"></a> **The New York Times Company.** (2026). *2025 annual report*. [Company annual report](https://s23.q4cdn.com/152113917/files/doc_events/2026/Mar/The-New-York-Times-Company-2025-Annual-Report.pdf). Strategy excerpt consulted November 22, 2026, for business context only.
